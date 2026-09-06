@@ -28,7 +28,12 @@ write.csv(annotation_provenance(), file.path(RES, "annotation_provenance.csv"), 
 step("QC figures")
 qc <- qc_table(dds)
 write.csv(qc, file.path(RES, "qc_table.csv"), row.names = FALSE)
-plot_libsize_vs_sizefactor(qc)
+# name the ten genes that carry the skew, and flag which are milk-protein
+# family, so the figure subtitle states measured fact rather than a guess
+worst_lib <- qc$label[which.max(qc$top10)]
+top10_ids <- names(sort(counts(dds)[, worst_lib], decreasing = TRUE)[1:10])
+plot_libsize_vs_sizefactor(qc, top_syms = sym[top10_ids],
+                           top_is_milk = top10_ids %in% milk_gene_ids(sym, top10_ids))
 pca <- plot_pca(dds)
 
 step("differential expression, 2 contrasts")
@@ -53,7 +58,8 @@ step("DE figures")
 for (nm in names(tabs)) {
   readr::write_csv(tabs[[nm]], file.path(RES, paste0("de_", nm, ".csv")))
   s <- summarise_contrast(tabs[[nm]])
-  sub <- sprintf("%d of %d tested genes significant at padj<0.05; %d with |LFC|>1 after shrinkage. n=2 per group.",
+  # wrapped: the one-line form ran past the panel edge at width 5.2in
+  sub <- sprintf("%d of %d tested genes significant at padj<0.05;\n%d with |LFC|>1 after shrinkage. n=2 per group.",
                  s$n_sig, s$n_tested, s$n_strong)
   ttl <- if (nm == "B_vs_L_virgin") "Basal vs luminal cells, virgin mammary gland"
          else "Lactating vs pregnant luminal cells"

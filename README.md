@@ -53,16 +53,17 @@ outputs are byte-identical.
 **2. The headline enrichment result is tested against its own artefact
 explanation.** Both contrasts return strong *negative* enrichment for ribosome
 and translation pathways. That is exactly what a normalisation failure would
-also produce here: 17 casein/whey genes occupy **54%** of each lactating
-library, and if size-factor estimation were absorbing that, everything else
-would be pushed down together.
+also produce here: 17 casein/whey genes occupy **54%** and **53%** of the two
+lactating libraries, and if size-factor estimation were absorbing that,
+everything else would be pushed down together.
 
 So `R/06_sensitivity.R` drops the milk-protein genes by gene family (not by
 "top N expressed", which would make the exclusion set depend on the libraries
 under test), refits from raw counts — new size factors, new dispersions, new
 tests — and reruns the enrichment. Result: NES correlation **0.9998** across
-all 717 pathways, no score moving by more than 0.20, all 15 translation sets
-still significant. The signature is a real relative shift, not an artefact.
+all 717 pathways, no score moving by more than 0.20, and every one of the 15
+significant translation sets (of 16 present) still significant — none drops
+out. The signature is a real relative shift, not an artefact.
 Median-of-ratios was already robust to those 17 genes: removing them moves no
 size factor in any of the 12 libraries by more than 0.0014, and the two
 lactating libraries — the ones holding 54% and 53% of their reads in milk

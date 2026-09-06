@@ -2,11 +2,12 @@
 # 03_qc_figures.R — QC panels that justify the normalisation choice.
 #
 # The point of the first panel: in the two lactating luminal libraries, ~54%
-# of all reads sit in ten genes (milk-protein transcripts). Their raw library
-# sizes are the LARGEST of the twelve, yet their DESeq2 size factors are the
-# SMALLEST. Normalising by total counts would therefore deflate every other
-# gene in those samples. This is the concrete reason median-of-ratios is used
-# instead, and it is measurable in this dataset rather than asserted.
+# of all reads sit in just ten genes — eight of them caseins/whey proteins,
+# plus COX1 and Scd1. Their raw library sizes are the LARGEST of the twelve,
+# yet their DESeq2 size factors are the SMALLEST. Normalising by total counts
+# would therefore deflate every other gene in those samples. This is the
+# concrete reason median-of-ratios is used instead, and it is measurable in
+# this dataset rather than asserted.
 
 suppressPackageStartupMessages({
   library(DESeq2); library(ggplot2); library(dplyr); library(tidyr)
@@ -29,7 +30,12 @@ qc_table <- function(dds) {
   )
 }
 
-plot_libsize_vs_sizefactor <- function(qc, path = file.path(FIG, "qc_normalisation.png")) {
+# top_syms: symbols of the top-10 genes in the most skewed library, and which
+# of them are milk-protein family. Passed in rather than hardcoded so the
+# subtitle cannot drift from the data — an earlier version claimed all ten
+# were milk-protein genes when two (COX1, Scd1) are not.
+plot_libsize_vs_sizefactor <- function(qc, top_syms = NULL, top_is_milk = NULL,
+                                       path = file.path(FIG, "qc_normalisation.png")) {
   # label the samples that carry the argument: the two most skewed and,
   # for contrast, the least skewed one
   qc$flag <- rank(-qc$top10) <= 2 | rank(qc$top10) == 1
@@ -37,6 +43,18 @@ plot_libsize_vs_sizefactor <- function(qc, path = file.path(FIG, "qc_normalisati
   lab$txt <- sprintf("%s\n%s %s\n%.0f%% in top 10", lab$label, lab$cell,
                      ifelse(lab$stage == "2 day lactation", "lactating",
                             as.character(lab$stage)), 100 * lab$top10)
+
+  # every number and gene name in the subtitle is measured here, not asserted
+  worst <- qc[order(-qc$top10), ][1:2, ]
+  sub <- if (is.null(top_syms)) {
+    sprintf("Two lactating luminal samples hold %.0f%% and %.0f%% of their reads in ten genes;\nscaling by total counts would deflate every other gene in them, so median-of-ratios\nis used instead",
+            100 * worst$top10[1], 100 * worst$top10[2])
+  } else {
+    sprintf("%s holds %.0f%% of its reads in ten genes — %d caseins/whey (%s) plus %s;\nscaling by total counts would deflate every other gene in it, so median-of-ratios\nis used instead",
+            worst$label[1], 100 * worst$top10[1], sum(top_is_milk),
+            paste(head(top_syms[top_is_milk], 3), collapse = ", "),
+            paste(top_syms[!top_is_milk], collapse = " and "))
+  }
 
   p <- ggplot(qc, aes(libsize / 1e6, sizefac)) +
     geom_point(aes(colour = top10, shape = cell), size = 3) +
@@ -52,7 +70,7 @@ plot_libsize_vs_sizefactor <- function(qc, path = file.path(FIG, "qc_normalisati
     labs(x = "Raw library size (million reads)",
          y = "DESeq2 size factor",
          title = "The largest libraries get the smallest size factors",
-         subtitle = "Two lactating luminal samples hold ~54% of their reads in ten milk-protein genes\n(Csn1s1, Csn2, Csn1s2a, Wap, Glycam1, Trf); scaling by total counts would deflate\nevery other gene in them, so median-of-ratios is used instead") +
+         subtitle = sub) +
     theme_classic(base_size = 9) +
     theme(plot.title = element_text(hjust = 0, face = "plain"),
           plot.subtitle = element_text(hjust = 0, colour = GREY, size = 7))
