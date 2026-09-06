@@ -7,7 +7,9 @@ name: pipeline
 #            ~40 MB and takes a few minutes.
 on:
   push:
-    branches: [main]
+    # both names listed on purpose: this repo's default branch is master,
+    # and CI that silently never fires is worse than no CI at all
+    branches: [main, master]
   pull_request:
   schedule:
     - cron: "0 6 * * 1"

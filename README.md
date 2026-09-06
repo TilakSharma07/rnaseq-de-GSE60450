@@ -1,8 +1,15 @@
 # RNA-seq differential expression: mouse mammary gland (GSE60450)
 
+[![pipeline](https://github.com/TilakSharma07/rnaseq-de-GSE60450/actions/workflows/ci.yml/badge.svg)](https://github.com/TilakSharma07/rnaseq-de-GSE60450/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 End-to-end DESeq2 + fgsea pipeline on a public dataset, with the sample-mapping
 trap, the composition-bias question, and the annotation-provenance question all
 handled explicitly rather than assumed away.
+
+Run locally with R 4.5.3 / Bioconductor 3.22 (DESeq2 1.50.2, fgsea 1.36.2,
+apeglm 1.32.0); `results/session_info.txt` records the exact versions behind
+every number in this README.
 
 ```bash
 ./download_data.sh        # ~40 MB from GEO, NCBI, Reactome; idempotent
