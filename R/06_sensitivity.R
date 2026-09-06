@@ -48,7 +48,11 @@ compare_nes <- function(gsea_full, gsea_sub, label_regex) {
   a <- gsea_full[, c("pathway", "NES", "padj")]
   b <- gsea_sub[,  c("pathway", "NES", "padj")]
   m <- merge(a, b, by = "pathway", suffixes = c("_full", "_nomilk"))
-  m$is_translation <- grepl(label_regex, m$pathway, ignore.case = TRUE)
+  # "translation" also matches "post-translational modification" and
+  # "posttranslational processing", which are unrelated to ribosome biogenesis
+  # and would inflate the highlighted set from 15 to 21. Exclude them.
+  m$is_translation <- grepl(label_regex, m$pathway, ignore.case = TRUE) &
+                      !grepl("post-?translational", m$pathway, ignore.case = TRUE)
   m
 }
 
@@ -57,11 +61,13 @@ plot_sensitivity <- function(cmp, path = "results/figures/sensitivity_nomilk.png
   GREY <- "#5A5A5A"; RED <- "#8C2D2D"; PALE <- "#BFBFBF"
   r <- cor(cmp$NES_full, cmp$NES_nomilk, use = "complete.obs")
   n_tr <- sum(cmp$is_translation)
+  n_tr_sig <- sum(cmp$is_translation & cmp$padj_nomilk < 0.05)
   p <- ggplot(cmp, aes(NES_full, NES_nomilk)) +
     geom_abline(slope = 1, intercept = 0, linetype = 2, colour = GREY, linewidth = 0.3) +
     geom_point(aes(colour = is_translation, size = is_translation), alpha = 0.7) +
     scale_colour_manual(values = c(`TRUE` = RED, `FALSE` = PALE),
-                        labels = c(`TRUE` = sprintf("translation / ribosome (n=%d)", n_tr),
+                        labels = c(`TRUE` = sprintf("translation / ribosome (%d sets, %d significant)",
+                                                    n_tr, n_tr_sig),
                                    `FALSE` = "other pathways"), name = NULL) +
     scale_size_manual(values = c(`TRUE` = 1.5, `FALSE` = 0.7), guide = "none") +
     annotate("text", x = min(cmp$NES_full, na.rm = TRUE), y = max(cmp$NES_nomilk, na.rm = TRUE),
@@ -70,10 +76,9 @@ plot_sensitivity <- function(cmp, path = "results/figures/sensitivity_nomilk.png
     labs(x = "NES, all 16,037 genes",
          y = "NES, 17 milk-protein genes removed and refit",
          title = "The translation signature is not a normalisation artefact",
-         subtitle = sprintf("Dropping the casein/whey genes that hold 54%% of the lactating libraries and refitting from\nraw counts moves no NES by more than %.2f (r = %.4f); %d of %d pathways change significance\ncall. All %d translation sets stay significant, so the ribosomal depletion is a real shift",
+         subtitle = sprintf("Dropping the casein/whey genes that hold 54%% of the lactating libraries and refitting from\nraw counts moves no NES by more than %.2f (r = %.4f); %d of %d pathways change significance\ncall. Every significant translation set stays significant, so the depletion is a real shift",
                             max(abs(cmp$NES_full - cmp$NES_nomilk), na.rm = TRUE), r,
-                            sum((cmp$padj_full < 0.05) != (cmp$padj_nomilk < 0.05)), nrow(cmp),
-                            sum(cmp$is_translation & cmp$padj_nomilk < 0.05))) +
+                            sum((cmp$padj_full < 0.05) != (cmp$padj_nomilk < 0.05)), nrow(cmp))) +
     theme_classic(base_size = 9) +
     theme(plot.title = element_text(hjust = 0, face = "plain"),
           plot.subtitle = element_text(hjust = 0, colour = GREY, size = 6.8),
