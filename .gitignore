@@ -1,0 +1,21 @@
+# Inputs are public and re-fetchable by download_data.sh — never commit them.
+# The sample sheet is derived, not authored: build_sample_sheet.R rebuilds it.
+data/raw/
+data/annotation/
+data/sample_sheet.csv
+
+# Derived tables and objects regenerate in ~70 s, so they are not tracked.
+results/*.rds
+results/*.csv
+results/session_info.txt
+
+# Figures ARE tracked (all 9, 2.4 MB total): the README embeds four of them
+# with relative paths, and an untracked figure renders as a broken image on
+# the repo page — the first thing a reader sees.
+
+.Rhistory
+.RData
+.Rproj.user/
+*.Rproj
+__pycache__/
+.DS_Store

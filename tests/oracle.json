@@ -1,0 +1,18 @@
+{
+ "n_genes_raw": 27179,
+ "n_samples": 12,
+ "n_genes_kept": 16037,
+ "libsize_min": 20015386,
+ "libsize_max": 24723827,
+ "libsize_min_sample": "MCL1-DL",
+ "libsize_max_sample": "MCL1-LE",
+ "total_counts": 269027617,
+ "groups": {
+  "basal_virgin": 2,
+  "basal_pregnant": 2,
+  "basal_lactating": 2,
+  "luminal_virgin": 2,
+  "luminal_pregnant": 2,
+  "luminal_lactating": 2
+ }
+}

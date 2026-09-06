@@ -1,0 +1,61 @@
+name: pipeline
+
+# Two jobs, deliberately split:
+#   tests  — runs on every push, no network beyond package install. Fast.
+#   full   — downloads the real GEO data and runs the whole pipeline, uploading
+#            the figures as artefacts. Weekly and on demand, because it pulls
+#            ~40 MB and takes a few minutes.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    container: bioconductor/bioconductor_docker:RELEASE_3_22
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install packages
+        run: |
+          R -q -e "install.packages(c('tidyverse','ggrepel','testthat','sessioninfo','jsonlite'), repos='https://cloud.r-project.org')"
+          R -q -e "BiocManager::install(c('DESeq2','apeglm','fgsea'), ask=FALSE, update=FALSE)"
+      - name: Fetch inputs
+        run: ./download_data.sh
+      - name: Run tests
+        run: Rscript tests/run_tests.R
+
+  full:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    container: bioconductor/bioconductor_docker:RELEASE_3_22
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install packages
+        run: |
+          R -q -e "install.packages(c('tidyverse','ggrepel','pheatmap','rmarkdown','knitr','testthat','sessioninfo','jsonlite'), repos='https://cloud.r-project.org')"
+          R -q -e "BiocManager::install(c('DESeq2','apeglm','fgsea'), ask=FALSE, update=FALSE)"
+      - name: Fetch inputs
+        run: ./download_data.sh
+      - name: Run pipeline
+        run: Rscript run_pipeline.R
+      - name: Check key results are reproducible
+        run: |
+          Rscript -e '
+            s <- read.csv("results/de_summary.csv")
+            stopifnot(s$n_tested[1] == 16037)
+            cmp <- read.csv("results/sensitivity_nomilk.csv")
+            r <- cor(cmp$NES_full, cmp$NES_nomilk, use="complete.obs")
+            cat("NES correlation:", round(r, 4), "\n")
+            stopifnot(r > 0.99)
+            cat("reproducibility checks passed\n")'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: figures-and-tables
+          path: |
+            results/figures/*.png
+            results/*.csv
+            results/session_info.txt
