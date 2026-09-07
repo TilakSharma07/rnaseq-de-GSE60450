@@ -45,6 +45,14 @@ tabs <- lapply(names(CONTRASTS), function(nm)
 names(tabs) <- names(CONTRASTS)
 saveRDS(tabs, file.path(RES, "de_tables.rds"))
 
+# Positive control on the stage contrast: lactation markers must come out UP.
+# A swapped contrast passes every count-based check, so this stops the run
+# before any figure or table is written rather than after.
+pc <- positive_control(tabs$lact_vs_preg_luminal, sym)
+cat("positive control passed (lactation markers up):\n")
+print(format(pc, digits = 3), row.names = FALSE)
+write.csv(pc, file.path(RES, "positive_control.csv"), row.names = FALSE)
+
 summ <- do.call(rbind, lapply(names(tabs), function(nm) {
   s <- summarise_contrast(tabs[[nm]])
   data.frame(contrast = nm, n_tested = s$n_tested, n_sig = s$n_sig,

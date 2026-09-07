@@ -13,7 +13,7 @@ every number in this README.
 
 ```bash
 ./download_data.sh        # ~40 MB from GEO, NCBI, Reactome; idempotent
-Rscript tests/run_tests.R # 18 tests
+Rscript tests/run_tests.R # 23 tests
 Rscript run_pipeline.R    # ~70 s -> results/
 ```
 
@@ -57,11 +57,32 @@ The sample sheet is also derived twice, independently — once in R
 (`build_sample_sheet.R`), once in Python during development — and the two
 outputs are byte-identical.
 
-**2. The headline enrichment result is tested against its own artefact
+**2. The comparison direction is pinned by biology, not by convention.**
+`contrast_table(dds, "luminal_pregnant", "luminal_lactating")` is a perfectly
+valid DESeq2 call that inverts every sign, and nothing in `de_summary.csv`
+would notice: the counts are either sign-agnostic (`n_sig`, `n_strong`) or
+simply exchange (`n_up` ↔ `n_down`). So `positive_control()` in `R/02_de.R`
+asserts what has to be true outside the count matrix — milk-protein genes are
+induced in lactation — and stops the run before any figure is written:
+
+| marker | shrunken log2FC | padj |
+|---|---|---|
+| Csn2 | +1.92 | 1.8e-06 |
+| Wap | +3.75 | 2.9e-40 |
+| Lalba | +3.63 | 3.5e-17 |
+| Csn1s1 | +2.15 | 6.9e-18 |
+| Csn1s2a | +1.91 | 2.7e-18 |
+
+The markers are named by symbol and resolved through the annotation, so the
+check cannot be satisfied by whichever genes happen to top the table. The test
+suite runs it both ways: forward must pass, and the swapped contrast must raise.
+
+**3. The headline enrichment result is tested against its own artefact
 explanation.** Both contrasts return strong *negative* enrichment for ribosome
 and translation pathways. That is exactly what a normalisation failure would
-also produce here: 17 casein/whey genes occupy **54%** and **53%** of the two
-lactating libraries, and if size-factor estimation were absorbing that,
+also produce here: 17 milk-protein and secretory genes occupy **54.0%** and
+**53.0%** of the two lactating libraries (**40.0%** and **39.2%** in the
+caseins and whey alone), and if size-factor estimation were absorbing that,
 everything else would be pushed down together.
 
 So `R/06_sensitivity.R` drops the milk-protein genes by gene family (not by
@@ -78,7 +99,7 @@ protein — move by 0.0005 and 0.0007.
 
 ![sensitivity](results/figures/sensitivity_nomilk.png)
 
-**3. Annotation provenance is a file, not a package version.**
+**4. Annotation provenance is a file, not a package version.**
 Gene symbols come from NCBI `Mus_musculus.gene_info`, pathways from Reactome
 `NCBI2Reactome.txt`, both fetched by `download_data.sh` and recorded with size
 and mtime in `results/annotation_provenance.csv`. No `org.Mm.eg.db`.
@@ -127,7 +148,8 @@ R/03_qc_figures.R         library size vs size factor, PCA
 R/04_de_figures.R         volcano, MA
 R/05_enrichment.R         fgsea over Reactome
 R/06_sensitivity.R        refit without milk genes; artefact test
-tests/                    18 testthat tests, incl. the ordering regression
+tests/                    23 testthat tests, incl. the ordering regression
+                          and the contrast-direction positive control
 Dockerfile                pinned Bioconductor 3.22
 .github/workflows/ci.yml  tests on push; full pipeline weekly
 ```

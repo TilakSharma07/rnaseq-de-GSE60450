@@ -60,6 +60,49 @@ summarise_contrast <- function(tab) {
        n_down = sum(strong_shrunk & tab$lfc_shrunk < 0))
 }
 
+# Biological positive control for the lactating-vs-pregnant luminal contrast.
+#
+# The sample-sheet tests already catch a positional join. They do NOT catch a
+# swapped contrast: contrast_table(dds, "luminal_pregnant", "luminal_lactating")
+# is a valid DESeq2 call that inverts every sign, and every count in
+# de_summary.csv is sign-agnostic (n_sig, n_strong) or symmetric under the swap
+# (n_up and n_down exchange), so nothing downstream notices.
+#
+# What pins the direction is biology outside the count matrix: milk-protein
+# genes are induced in lactation. Asserting that they come out UP turns an
+# inverted comparison into a failed run rather than a published figure with
+# every arrow backwards.
+#
+# The markers are named by symbol and resolved through the annotation, so the
+# check cannot be satisfied by whichever genes happen to top the table.
+POS_CONTROL_MARKERS <- c("Csn2", "Wap", "Lalba", "Csn1s1", "Csn1s2a")
+
+positive_control <- function(tab, sym, markers = POS_CONTROL_MARKERS,
+                             min_lfc = 1, max_padj = 1e-4) {
+  ids <- names(sym)[match(markers, unname(sym))]
+  missing <- markers[is.na(ids)]
+  if (length(missing))
+    stop("positive control: marker not in annotation: ", paste(missing, collapse = ", "))
+
+  i <- match(ids, tab$entrez)
+  if (anyNA(i))
+    stop("positive control: marker not in the tested set: ",
+         paste(markers[is.na(i)], collapse = ", "))
+
+  out <- data.frame(symbol = markers, entrez = ids,
+                    lfc_shrunk = tab$lfc_shrunk[i], padj = tab$padj[i],
+                    stringsAsFactors = FALSE)
+  bad <- is.na(out$lfc_shrunk) | out$lfc_shrunk < min_lfc |
+         is.na(out$padj) | out$padj > max_padj
+  if (any(bad))
+    stop("positive control FAILED — lactation markers are not up in this ",
+         "contrast, so the comparison is probably inverted:\n",
+         paste(sprintf("  %-8s lfc_shrunk=%+.2f padj=%.3g",
+                       out$symbol[bad], out$lfc_shrunk[bad], out$padj[bad]),
+               collapse = "\n"))
+  out
+}
+
 if (sys.nframe() == 0) {
   dds <- readRDS(file.path(RES, "dds_raw.rds"))
   dds <- run_de(dds)
