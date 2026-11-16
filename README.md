@@ -1,6 +1,8 @@
 # RNA-seq differential expression: mouse mammary gland (GSE60450)
 
 [![pipeline](https://github.com/TilakSharma07/rnaseq-de-GSE60450/actions/workflows/ci.yml/badge.svg)](https://github.com/TilakSharma07/rnaseq-de-GSE60450/actions/workflows/ci.yml)
+
+[![pipeline](https://github.com/TilakSharma07/rnaseq-de-GSE60450/actions/workflows/ci.yml/badge.svg)](https://github.com/TilakSharma07/rnaseq-de-GSE60450/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 End-to-end DESeq2 + fgsea pipeline on a public dataset, with the sample-mapping
