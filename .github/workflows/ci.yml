@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install packages
         run: |
-          R -q -e "install.packages(c('tidyverse','ggrepel','testthat','sessioninfo','jsonlite'))"
+          R -q -e "options(repos=c(CRAN='https://packagemanager.posit.co/cran/2025-10-29')); install.packages(c('tidyverse','ggrepel','testthat','sessioninfo','jsonlite'))"
           R -q -e "BiocManager::install(c('DESeq2','apeglm','fgsea'), ask=FALSE, update=FALSE)"
       - name: Fetch inputs
         run: ./download_data.sh
@@ -38,7 +38,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install packages
         run: |
-          R -q -e "install.packages(c('tidyverse','ggrepel','pheatmap','rmarkdown','knitr','testthat','sessioninfo','jsonlite'))"
+          R -q -e "options(repos=c(CRAN='https://packagemanager.posit.co/cran/2025-10-29')); install.packages(c('tidyverse','ggrepel','pheatmap','rmarkdown','knitr','testthat','sessioninfo','jsonlite'))"
           R -q -e "BiocManager::install(c('DESeq2','apeglm','fgsea'), ask=FALSE, update=FALSE)"
       - name: Fetch inputs
         run: ./download_data.sh
