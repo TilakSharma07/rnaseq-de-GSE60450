@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "rnaseq-de-GSE60450: Composition bias in mammary RNA-seq: a differential expression result held to positive and negative controls before reporting"
+type: software
+authors:
+  - given-names: Tilak
+    family-names: Sharma
+    email: tilaksharma273@gmail.com
+    affiliation: "Independent researcher, Baran, Rajasthan, India"
+    orcid: "https://orcid.org/0009-0002-8764-904X"
+repository-code: "https://github.com/TilakSharma07/rnaseq-de-GSE60450"
+url: "https://tilaksharma07.github.io"
+license: MIT
+keywords:
+  - "RNA-seq"
+  - "differential expression"
+  - "DESeq2"
+  - "composition bias"
+  - "GSE60450"
