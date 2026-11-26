@@ -18,7 +18,11 @@ mkdir -p data/raw data/annotation results/figures
 fetch () {  # url, dest
   if [ -s "$2" ]; then echo "  cached  $2"; return; fi
   echo "  fetch   $2"
-  curl -sSfL -o "$2" "$1"
+  # NCBI returns 403 to some datacentre IPs under load; retry on every error
+  # and identify the client, which is what NCBI asks of programmatic users.
+  curl -sSfL --retry 5 --retry-delay 5 --retry-all-errors \
+       --user-agent "rnaseq-de-GSE60450 (+https://github.com/TilakSharma07/rnaseq-de-GSE60450)" \
+       -o "$2" "$1"
 }
 
 echo "GSE60450 counts and metadata:"
